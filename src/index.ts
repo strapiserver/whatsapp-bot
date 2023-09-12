@@ -10,6 +10,7 @@ import {
 import { coordinatesRegex } from "./helper";
 import db from "./db";
 import { Session } from "./session";
+import startReminder from "./startReminder";
 
 const client = new Client({
   authStrategy: new LocalAuth(),
@@ -25,6 +26,7 @@ const client = new Client({
 // create multiple visitkas!
 
 client.initialize();
+startReminder();
 
 client.on("qr", (qr) => {
   qrcode.generate(qr, { small: true });
@@ -48,11 +50,9 @@ client.on("message", async (message) => {
   //   session.waitingFor("end");
   //   return;
   // }
-  console.log(session.waiting);
-  if (session.m === "delete") {
-    session.send(
-      "Your data was removed. Please type *start* to register an exchanger or *human* to talk to an operator"
-    );
+  if (session.m === "restart") {
+    session.send("🧹 The exchanger was removed");
+    session.sendMenu();
     session.waitingFor("start");
     return;
   }
@@ -61,19 +61,19 @@ client.on("message", async (message) => {
 
   switch (session.waiting) {
     case "start":
-      session.send("Please send your location.");
+      session.send("📍 If you are in exchanger now please send your location");
       session.waitingFor("location");
       break;
 
     case "location":
       if (message.location) {
         const { latitude, longitude } = message.location;
-        session.send(`Your exchanger location is set to:`);
+        session.send(`✅ Your exchanger location is set!`);
         session.send(
-          `${Number(latitude).toFixed(4)} ${Number(longitude).toFixed(4)}`
+          `${Number(latitude).toFixed(4)}, ${Number(longitude).toFixed(4)}`
         );
         session.setCoordinates(+latitude, +longitude);
-        session.send("Now make a picture of the exchanger outside 📸");
+        session.send("📸 Now make a picture of the exchanger outside", 4000);
         session.waitingFor("exchanger_picture");
         break;
       }
@@ -82,36 +82,48 @@ client.on("message", async (message) => {
           .replace(/[{( )}]/g, "")
           .split(",");
         session.setCoordinates(+latitude, +longitude);
+        console.log(+latitude, +longitude);
+        session.send("📸 Now make a picture of the exchanger outside");
         session.waitingFor("exchanger_picture");
         break;
       }
-      session.send(
-        "If you are not in the exchanger now please send location like in example:"
-      );
+      session.send("📍 Please send location like in example:");
       session.send("_41.03325,   28.98181_");
+      session.send("Or choose command: ");
+      session.sendMenu();
       break;
+
     case "exchanger_picture":
       if (session.m === "skip") {
-        session.send("You will not have exchanger image");
-        session.waitingFor("end");
+        session.send("📸 You skipped setting exchanger image");
+        session.registerExchanger();
+        session.waitingFor("ready");
         break;
       }
-      if (message.hasMedia) {
-        const { mimetype, filesize } = await message.downloadMedia();
-        if (mimetype === "image/jpeg" && filesize && filesize < 5_000_000) {
-          session.send("Your rates will be recognized and updated... ⌛");
-          session.waitingFor("end");
-        } else {
-          session.send("Wrong image format or too big!");
-        }
+      const exchangerImage = await session.checkImage();
+      if (exchangerImage) {
+        session.registerExchanger();
+        session.waitingFor("ready");
         break;
       }
-      session.send("Please make a picture or type *skip* 📸");
+      session.send("📸 Waiting for exchanger picture");
+      session.send("⏭️ Type *skip* if you can't make a picture now");
+      session.send("Or choose command: ");
+      session.sendMenu();
       break;
+
+    case "ready":
+      const ratesImage = await session.checkImage();
+      if (ratesImage) {
+        session.send(`🔍 Your rates will be updated after AI recognition`);
+        session.send(
+          "⌛ After 6 hours you will be reminded to retake photo",
+          4000
+        );
+        break;
+      }
     default:
-      session.send(
-        "Please type *delete* to restart again or *human* to talk to an operator."
-      );
+      session.sendMenu();
   }
 
   // session.send("Now make a picture of your exchange rates 📸");

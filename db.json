@@ -1,3 +1,12 @@
 {
-    "jwt": ""
+    "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiaWF0IjoxNjk0NDc1NDc2LCJleHAiOjE2OTcwNjc0NzZ9.qCvl1zXebab3XN9XZiABbrMLXHu6qDTdo-xElzTUyuQ",
+    "77478703850@c": {
+        "us": {
+            "waiting": "exchanger_picture",
+            "coordinates": {
+                "latitude": 41.02445602416992,
+                "longitude": 28.956390380859375
+            }
+        }
+    }
 }
