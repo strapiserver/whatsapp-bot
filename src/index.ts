@@ -1,3 +1,4 @@
+import { uploadMutation } from "./gql/queries";
 import qrcode from "qrcode-terminal";
 import {
   Buttons,
@@ -7,10 +8,9 @@ import {
   Location,
   MessageMedia,
 } from "whatsapp-web.js";
-import { coordinatesRegex } from "./helper";
-import db from "./db";
 import { Session } from "./session";
-import startReminder from "./startReminder";
+import startReminder from "./Authenticate";
+import { coordinatesRegex } from "./helper";
 
 const client = new Client({
   authStrategy: new LocalAuth(),
@@ -50,6 +50,8 @@ client.on("message", async (message) => {
   //   session.waitingFor("end");
   //   return;
   // }
+  //session.waitingFor("exchanger_picture");
+
   if (session.m === "restart") {
     session.send("🧹 The exchanger was removed");
     session.sendMenu();
@@ -64,16 +66,15 @@ client.on("message", async (message) => {
       session.send("📍 If you are in exchanger now please send your location");
       session.waitingFor("location");
       break;
-
     case "location":
       if (message.location) {
         const { latitude, longitude } = message.location;
+        session.setCoordinates(+latitude, +longitude);
         session.send(`✅ Your exchanger location is set!`);
         session.send(
           `${Number(latitude).toFixed(4)}, ${Number(longitude).toFixed(4)}`
         );
-        session.setCoordinates(+latitude, +longitude);
-        session.send("📸 Now make a picture of the exchanger outside", 4000);
+        session.send("📸 Now make a picture of the exchanger outside", 2000);
         session.waitingFor("exchanger_picture");
         break;
       }
@@ -82,8 +83,8 @@ client.on("message", async (message) => {
           .replace(/[{( )}]/g, "")
           .split(",");
         session.setCoordinates(+latitude, +longitude);
-        console.log(+latitude, +longitude);
-        session.send("📸 Now make a picture of the exchanger outside");
+        session.send(`✅ Your exchanger location is set!`);
+        session.send("📸 Now make a picture of the exchanger outside", 2000);
         session.waitingFor("exchanger_picture");
         break;
       }
@@ -104,6 +105,7 @@ client.on("message", async (message) => {
       if (exchangerImage) {
         session.registerExchanger();
         session.waitingFor("ready");
+        session.uploadImage(exchangerImage);
         break;
       }
       session.send("📸 Waiting for exchanger picture");
@@ -122,8 +124,10 @@ client.on("message", async (message) => {
         );
         break;
       }
+      break;
     default:
       session.sendMenu();
+      break;
   }
 
   // session.send("Now make a picture of your exchange rates 📸");

@@ -1,11 +1,20 @@
 {
-    "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiaWF0IjoxNjk0NDc1NDc2LCJleHAiOjE2OTcwNjc0NzZ9.qCvl1zXebab3XN9XZiABbrMLXHu6qDTdo-xElzTUyuQ",
+    "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiaWF0IjoxNjk1NjgyOTA5LCJleHAiOjE2OTgyNzQ5MDl9.icSoJWnwpisLOfsedN7ChznCFv0rQg6335ZqVnK5vTc",
     "77478703850@c": {
         "us": {
             "waiting": "exchanger_picture",
             "coordinates": {
                 "latitude": 41.02445602416992,
                 "longitude": 28.956390380859375
+            }
+        }
+    },
+    "905447876009@c": {
+        "us": {
+            "waiting": "exchanger_picture",
+            "coordinates": {
+                "latitude": 41.02455139160156,
+                "longitude": 28.957120895385742
             }
         }
     }

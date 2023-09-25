@@ -1,8 +1,9 @@
 import { Client, Message, MessageMedia } from "whatsapp-web.js";
 import db from "./db";
-import fs from "fs";
+
+import fs, { createReadStream } from "fs";
 import callStrapi from "./gql/callStrapi";
-import { createExchangerMutation } from "./gql/queries";
+import { uploadMutation, createExchangerMutation } from "./gql/queries";
 
 export class Session {
   message: Message;
@@ -35,16 +36,17 @@ export class Session {
       const { mimetype, filesize, data } = await this.message.downloadMedia();
       if (mimetype === "image/jpeg" && filesize && filesize < 5_000_000) {
         return data;
-      } else {
-        this.send("Wrong image format or too big!");
       }
+      this.send("Wrong image format or too big!");
       return;
     }
+    return;
   };
 
   sendMenu = () => {
-    this.waiting === "ready" && this.send("*open* - open exchanger");
-    this.waiting === "ready" && this.send("*close* - close exchanger");
+    this.send("Type one of commands:");
+    this.waiting === "ready" && this.send("*open* - activate exchanger");
+    this.waiting === "ready" && this.send("*close* - disable exchanger");
     this.send("*restart* - register exchanger");
     this.send("*human* - talk to an operator");
   };
@@ -55,7 +57,7 @@ export class Session {
     this.send(media);
   };
 
-  registerExchanger = () => {
+  registerExchanger = async () => {
     db.save();
     const registrationData = db.getData(`.${this.message.from}`);
     const { latitude, longitude } = registrationData.coordinates;
@@ -66,9 +68,34 @@ export class Session {
       contact: this.message.from,
       opened: true,
     });
+
+    // const { FormData } = require("formdata-node");
+    // const file = await blobFrom("./1.png", "image/png");
+    // const form = new FormData();
+
+    // form.append("files", file, "1.png");
+
     this.send("✅ The exchanger is registered!");
     this.send("💲 Please make a picture of USD/EUR rates like in example:");
     this.sendImage("ratesExample");
-    this.send("✨ The AI system will recognize rates and update map", 4000);
+    this.send(
+      "✨ The AI system will recognize rates and update it on the map",
+      4000
+    );
+  };
+
+  uploadImage = (file: any) => {
+    // const blob = new Blob(file);
+    callStrapi(uploadMutation, {
+      file: {},
+      refId: "1",
+      ref: "api::physical-exchanger.physical-exchanger",
+      field: "photo",
+      info: {
+        name: "test2",
+        alternativeText: "",
+        caption: "test2",
+      },
+    });
   };
 }

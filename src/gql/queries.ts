@@ -20,18 +20,35 @@ export const createExchangerMutation = gql`
 `;
 
 export const AuthMutation = gql`
-  mutation login {
+  mutation login($identifier: String!, $password: String!) {
     login(
-      input: {
-        identifier: "whatsapp_bot"
-        password: "x#@TH4L-#U"
-        provider: "local"
-      }
+      input: { identifier: $identifier, password: $password, provider: "local" }
     ) {
       jwt
       user {
         username
         email
+      }
+    }
+  }
+`;
+
+export const uploadMutation = gql`
+  mutation SingleImageUpload(
+    $refId: ID
+    $ref: String
+    $field: String
+    $info: FileInfoInput
+    $file: Upload!
+  ) {
+    upload(refId: $refId, ref: $ref, field: $field, file: $file, info: $info) {
+      data {
+        id
+        attributes {
+          name
+          createdAt
+          updatedAt
+        }
       }
     }
   }
